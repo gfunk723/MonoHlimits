@@ -9,6 +9,7 @@ import types
 #model = "2HDM"
 model = "ZpB"
 
+
 doScaleXS = 1
 
 doFillAvgHigh = 1
@@ -87,7 +88,7 @@ if model =="2HDM":
     limDir = "Zprime"
 if model =="ZpB":
     limitPlotObs.GetYaxis().SetTitle("M_{#chi} [GeV]")
-    limDir = "Baryonic"
+    limDir = "Zprime"
 
 def scaleXS(Z,A):
     xsFile = ""
@@ -99,10 +100,9 @@ def scaleXS(Z,A):
     returnString = "99999"
     for line in xsRef:
         if (str(line.split(' ')[0]) == str(Z) and str(line.split(' ')[1]) == str(A)):
-            returnString = str(1./float(line.split(' ')[2]))
+            returnString = str(1.0/float(line.split(' ')[2]))
             ##print returnString
     return returnString
-
 
 for a in A:
     for z in Z:
@@ -132,8 +132,8 @@ for a in A:
 
 # do averaging for below line
 if doFillAvgLow:
-    for j in range(1,limitPlotObs.GetNbinsX()+1):
-        for i in range (1,limitPlotObs.GetNbinsY()+1):
+    for i in range(1,limitPlotObs.GetNbinsY()+1):
+        for j in reversed(range (1,limitPlotObs.GetNbinsX()+1)):
             aVal = A[i-1]
             zVal = Z[j-1]
             binVal = str(limitPlotObs.GetBinContent(j,i))
@@ -599,7 +599,7 @@ if doFillAvgRest:
 
 
 
-limitPlotObs.GetZaxis().SetRangeUser(.3,70000000)
+limitPlotObs.GetZaxis().SetRangeUser(0.3,60000000)
 limitPlotObs.SetBarOffset(0.10)
 limitPlotObs.Draw("COLZ")
 
