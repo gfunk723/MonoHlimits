@@ -6,7 +6,10 @@ import re
 import json
 import types
 
-doScaleXS = 0
+#model = "2HDM"
+model = "2HDM"
+
+doScaleXS = 1
 
 doFillAvg = 1
 doFillAvgAll = 1
@@ -42,8 +45,16 @@ SetMyPalette()
 ROOT.gStyle.SetNumberContours(255)
 ROOT.gStyle.SetOptStat(0)
 
-A=[300,325,350,375,400,425,450,475,500,525,550,575,600,625,650,675]
-Z=[600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1400,1450,1500,1550,1600,1650,1700,1750,1800,1850,1900,1950]
+A=[]
+Z=[]
+if model == "2HDM":
+    A=[300,325,350,375,400,425,450,475,500,525,550,575,600,625,650,675]
+    Z=[450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1400,1450,1500,1550,1600,1650,1700,1750,1800,1850,1900,1950]
+    #A=[300,325,350,375,400,425,450,475,500,525,550,575,600,625,650,675,700,725,750,775,800,825,850,875,900,925,950,975]
+    #Z=[600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1400,1450,1500,1550,1600,1650,1700,1750,1800,1850,1900,1950,2000,2050,2100,2150,2200,2250,2300,2350,2400,2450,2500]
+elif model == "ZpB":
+    A=[25,50,75,100,125,150,175,200,225,250,275,300,325,350,375,400,425,450,475,500,525,550,575,600,625,650,675]
+    Z=[50,100,150,200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1400,1450,1500,1550,1600,1650,1700,1750,1800,1850,1900,1950]
 
 #A=[300,325,350,375,400,425,450,475,500,525,550,575,600,625,650,675,700,725,750,775,800,825,850,875,900,925,950,975]
 #Z=[600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1250,1300,1350,1400,1450,1500,1550,1600,1650,1700,1750,1800,1850,1900,1950,2000,2050,2100,2150,2200,2250,2300,2350,2400,2450,2500]
@@ -56,11 +67,23 @@ limitPlotDown = ROOT.TH2F("lplotDown","lplotDown",binsPerPoint*len(Z),Z[0],Z[-1]
 limitPlotUp2 = ROOT.TH2F("lplotU2","lplotU2",binsPerPoint*len(Z),Z[0],Z[-1]+50,binsPerPoint*len(A),A[0],A[-1]+25)
 limitPlotDown2 = ROOT.TH2F("lplotDown2","lplotDown2",binsPerPoint*len(Z),Z[0],Z[-1]+50,binsPerPoint*len(A),A[0],A[-1]+25)
 
+
+limDir = ""
 limitPlotObs.GetXaxis().SetTitle("M_{Z'} [GeV]")
-limitPlotObs.GetYaxis().SetTitle("M_{A} [GeV]")
+if model =="2HDM":
+    limitPlotObs.GetYaxis().SetTitle("M_{A} [GeV]")
+    limDir = "Zprime"
+if model =="ZpB":
+    limitPlotObs.GetYaxis().SetTitle("M_{\Chi} [GeV]")
+    limDir = "Baryonic"
 
 def scaleXS(Z,A):
-    xsRef = open("xtt_monoH.txt")
+    xsFile = ""
+    if model == "2HDM":
+        xsFile = "xtt_monoH.txt"
+    if model =="ZpB":
+        xsFile = "xtt_monoH_ZpB.txt"
+    xsRef = open(xsFile)
     returnString = "99999"
     for line in xsRef:
         if (str(line.split(' ')[0]) == str(Z) and str(line.split(' ')[1]) == str(A)):
@@ -76,8 +99,7 @@ for a in A:
     d=0
     for z in Z:
         data = {}
-        filename='Zprime'+str(z)+'A'+str(a)+'.json'
-        filenameObs='Zprime'+str(z)+'A'+str(a)+'.json'
+        filename= limDir+str(z)+'A'+str(a)+'.json'
         #print 'Using filename ' 
         #print filename
         scale = 1.
@@ -132,11 +154,12 @@ if doFillAvg:
                 if up != 0.0:
                     avg += up
                     div += 1
-                avg = avg/div
-                print "avg: " + str(avg)
-                for k in range (0,binsPerPoint):
-                    for l in range (0,binsPerPoint):
-                        limitPlotObs.SetBinContent(j+l,i+k,avg)
+                if div !=0:
+                    avg = avg/div
+                    print "avg: " + str(avg)
+                    for k in range (0,binsPerPoint):
+                        for l in range (0,binsPerPoint):
+                            limitPlotObs.SetBinContent(j+l,i+k,avg)
                 
                 if doFillAvgAll:
                     print " EXP back: {0}   forward: {1}   down: {2}   up: {3}   ".format(str(limitPlot.GetBinContent(j-binsPerPoint,i)),str(limitPlot.GetBinContent(j+binsPerPoint,i)),str(limitPlot.GetBinContent(j,i-binsPerPoint)),str(limitPlot.GetBinContent(j,i+binsPerPoint)))
@@ -265,6 +288,7 @@ if doFillAvg:
                             limitPlotDown2.SetBinContent(j+l,i+k,avg)
             j=j+binsPerPoint
         i=i+binsPerPoint
+
 
 testShapes = ROOT.TFile("testShapes.root","RECREATE")
 if doFillFit:
@@ -428,7 +452,7 @@ if doFillFit:
 
 testShapes.Close()
 
-limitPlotObs.GetZaxis().SetRange(0,5000)
+limitPlotObs.GetZaxis().SetRangeUser(0.4,1000)
 limitPlotObs.SetBarOffset(0.10)
 limitPlotObs.Draw("COLZ")
 
@@ -476,7 +500,7 @@ leg.SetTextFont(42)
 leg.SetTextSize(0.030)
 leg.AddEntry(limitPlotObsCopy,"Observed Limit (95% CL)","L")
 leg.AddEntry(limitPlot,"Expected Limit (95% CL)","L")
-leg.AddEntry(limitPlotUp,"Expected Limit +/- 1 \sigma","L")
+leg.AddEntry(limitPlotUp,"Expected Limit #pm 1 #sigma","L")
 #leg.AddEntry(limitPlotUp2,"Expected Limit +/- 2\sigma r = 1 (95% CL)","L")
 leg.Draw()
 
